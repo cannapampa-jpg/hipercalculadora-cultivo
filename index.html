@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hipercalculadora de cultivo | Cannabis medicinal</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+    background: #f7f8f6;
+    color: #23261f;
+    line-height: 1.5;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #5a5f52; font-size: 14px; margin: 0 0 28px; }
+  .card {
+    background: #fff;
+    border: 1px solid #e2e4dd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #0f6e56;
+    margin: 0 0 16px;
+  }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 5px; color: #3a3d34; }
+  label:first-child { margin-top: 0; }
+  select, input[type=number], input[type=text] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #cfd2c8;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    color: #23261f;
+  }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .radio-group { display: flex; gap: 10px; margin-top: 4px; }
+  .radio-opt {
+    flex: 1;
+    border: 1px solid #cfd2c8;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+  }
+  .radio-opt.active { border-color: #0f6e56; background: #e1f5ee; color: #085041; font-weight: 600; }
+  .hint { font-size: 12px; color: #7a7e70; margin-top: 4px; }
+  button.calc {
+    width: 100%;
+    padding: 14px;
+    background: #0f6e56;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  button.calc:hover { background: #085041; }
+  .hidden { display: none !important; }
+  #resultado { margin-top: 20px; }
+  .semaforo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+  .sem-verde { background: #eaf3de; color: #27500a; }
+  .sem-amarillo { background: #faeeda; color: #633806; }
+  .sem-rojo { background: #fcebeb; color: #501313; }
+  .confianza { font-size: 12px; font-weight: 400; opacity: .8; margin-left: auto; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .metric { background: #f1f3ec; border-radius: 8px; padding: 12px 14px; }
+  .metric .label { font-size: 12px; color: #5a5f52; }
+  .metric .value { font-size: 19px; font-weight: 700; margin-top: 2px; }
+  .config-list { list-style: none; padding: 0; margin: 0 0 14px; }
+  .config-list li { padding: 6px 0; border-bottom: 1px solid #edeee8; font-size: 14px; }
+  .config-list li:last-child { border-bottom: none; }
+  .aviso {
+    background: #fcebeb;
+    color: #501313;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .btn-formulador {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 10px 16px;
+    background: #fff;
+    border: 1px solid #0f6e56;
+    color: #0f6e56;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .disclaimer { font-size: 11px; color: #8a8e80; margin-top: 26px; line-height: 1.5; }
+  #modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  #modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: #fff; border-radius: 12px; max-width: 560px; width: 100%;
+    padding: 28px 24px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-box h2 { font-size: 18px; color: #501313; margin: 0 0 16px; }
+  .modal-box p { font-size: 13px; color: #3a3d34; line-height: 1.6; margin: 0 0 12px; }
+  .modal-box p:last-of-type { margin-bottom: 20px; }
+  .modal-buttons { display: flex; gap: 12px; }
+  .modal-buttons button {
+    flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+  }
+  .btn-entendido { background: #0f6e56; color: #fff; }
+  .btn-entendido:hover { background: #085041; }
+  .btn-cancelar { background: #f1f3ec; color: #3a3d34; border: 1px solid #cfd2c8; }
+  .btn-cancelar:hover { background: #e2e4dd; }
+  #app-content.bloqueado { filter: blur(4px); pointer-events: none; user-select: none; }
+</style>
+</head>
+<body>
+
+<div id="modal-overlay">
+  <div class="modal-box">
+    <h2>Aviso importante</h2>
+    <p>Antes de generar el informe, tenga en cuenta que esta herramienta realiza únicamente estimaciones orientativas de planificación de cultivo a partir de los datos ingresados por el usuario y de un modelo de cálculo. Los resultados son orientativos y no constituyen una recomendación médica, agronómica ni legal, ni garantizan los rendimientos estimados.</p>
+    <p>La exactitud de los resultados depende de la información proporcionada por el usuario y de las condiciones reales de cultivo. La aplicación no verifica los datos ingresados ni reemplaza el criterio profesional o el control analítico.</p>
+    <p>Esta herramienta está destinada exclusivamente a personas mayores de 18 años. El cultivo y el uso de cannabis con fines medicinales deben realizarse conforme a la normativa vigente, en el marco de la Ley N.º 27.350 y sus normas complementarias. La responsabilidad por el cumplimiento de dicha normativa corresponde exclusivamente al usuario.</p>
+    <p>Al continuar, usted declara ser mayor de 18 años y haber leído y comprendido este aviso.</p>
+    <div class="modal-buttons">
+      <button class="btn-cancelar" onclick="cerrarApp()">Cancelar</button>
+      <button class="btn-entendido" onclick="aceptarAviso()">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-content" class="bloqueado">
+
+<h1>Hipercalculadora de cultivo</h1>
+<p class="subtitle">Estimá si tu cultivo puede cubrir tu tratamiento con cannabis medicinal — cuántas plantas, qué maceta, y desde cuándo.</p>
+
+<div class="card">
+  <h2>1. Necesidad diaria</h2>
+
+  <p class="hint" style="margin:0 0 10px; color:#0f6e56; font-weight:600;">Esto define cuánto necesitás cubrir</p>
+
+  <label>¿Tu tratamiento es principalmente de CBD o de THC?</label>
+  <select id="cannabinoide" onchange="actualizarLabelsCannabinoide()">
+    <option value="CBD" selected>CBD</option>
+    <option value="THC">THC</option>
+    <option value="Otro">Otro / combinado</option>
+  </select>
+
+  <label id="label-dosis">¿Qué dosis diaria de CBD tenés indicada?</label>
+  <div class="radio-group">
+    <div class="radio-opt active" id="opt-mg" onclick="setDoseMode('mg')">Tengo mg/día</div>
+    <div class="radio-opt" id="opt-gotas" onclick="setDoseMode('gotas')">Tengo gotas y concentración</div>
+  </div>
+
+  <div id="bloque-mg">
+    <label>Dosis (mg/día)</label>
+    <input type="number" id="mgDia" value="30" min="0" step="0.1">
+  </div>
+
+  <div id="bloque-gotas" class="hidden">
+    <div class="row">
+      <div>
+        <label>Gotas por día</label>
+        <input type="number" id="gotasDia" value="20" min="0">
+      </div>
+      <div>
+        <label>Concentración del aceite (mg/ml)</label>
+        <input type="number" id="concentracionMgMl" value="30" min="0" step="0.1">
+      </div>
+    </div>
+    <p class="hint">Se asume gotero estándar de 20 gotas/ml.</p>
+  </div>
+
+  <label>¿Cuántos días por semana consumís?</label>
+  <input type="number" id="diasPorSemana" value="7" min="1" max="7">
+  <p class="hint">Si es todos los días, dejá 7. Si es día por medio o solo algunos días, ajustalo (no puede superar 7).</p>
+
+  <p class="hint" style="margin:20px 0 10px; color:#0f6e56; font-weight:600;">Esto define cuánto se aprovecha en el proceso</p>
+
+  <label>¿Qué vas a elaborar?</label>
+  <select id="elaboracion">
+    <option value="aceite">Aceite artesanal (aceite de oliva)</option>
+    <option value="alcohol">Extracción con alcohol</option>
+    <option value="otro">Otro / todavía no lo sé</option>
+  </select>
+
+  <p class="hint" style="margin:20px 0 10px; color:#0f6e56; font-weight:600;">Esto define cuánta planta hace falta cultivar</p>
+
+  <label id="label-potencia-toggle">¿Cómo tenés el dato de contenido de CBD de tu flor?</label>
+  <div class="radio-group">
+    <div class="radio-opt active" id="opt-porcentaje" onclick="setPotenciaMode('porcentaje')">Tengo un % aproximado</div>
+    <div class="radio-opt" id="opt-mgg" onclick="setPotenciaMode('mgg')">Tengo el dato de cromatografía (mg/g)</div>
+  </div>
+
+  <div id="bloque-porcentaje">
+    <label id="label-potencia">Contenido de CBD de tu flor</label>
+    <select id="potencia" onchange="togglePotenciaCustom()">
+      <option value="5">5%</option>
+      <option value="8">8%</option>
+      <option value="10" selected>10%</option>
+      <option value="12">12%</option>
+      <option value="15">15%</option>
+      <option value="18">18%</option>
+      <option value="20">20%</option>
+      <option value="personalizado">Personalizado</option>
+    </select>
+    <div id="bloque-potencia-custom" class="hidden">
+      <input type="number" id="potenciaCustom" value="10" min="1" max="35" step="0.1">
+    </div>
+  </div>
+
+  <div id="bloque-mgg" class="hidden">
+    <label id="label-mgg">mg de CBD por gramo de flor (dato de cromatografía)</label>
+    <input type="number" id="potenciaMgG" value="100" min="1" max="350" step="1">
+  </div>
+</div>
+
+<div class="card">
+  <h2>2. Cómo vas a cultivar</h2>
+
+  <label>Modalidad</label>
+  <div class="radio-group">
+    <div class="radio-opt active" id="opt-indoor" onclick="setModalidad('indoor')">Indoor</div>
+    <div class="radio-opt" id="opt-outdoor" onclick="setModalidad('outdoor')">Outdoor</div>
+  </div>
+
+  <div id="bloque-indoor">
+    <label>Cantidad máxima de plantas que podés/querés poner</label>
+    <input type="number" id="cantidadMaxPlantasIndoor" value="4" min="1">
+    <p class="hint">Es tu techo real (permiso, criterio propio). La app calcula la maceta que corresponde.</p>
+
+    <label>Ciclos de cultivo por año que podés realizar</label>
+    <input type="number" id="ciclosPorAno" value="1" min="1" max="5">
+
+    <label>Espacio disponible</label>
+    <select id="espacioIndoor">
+      <option value="0.64">0,8 × 0,8 m</option>
+      <option value="1" selected>1 × 1 m</option>
+      <option value="1.44">1,2 × 1,2 m</option>
+      <option value="2.56">1,6 × 1,6 m</option>
+      <option value="personalizada">Personalizada</option>
+    </select>
+    <div id="bloque-espacio-custom" class="hidden">
+      <div class="row">
+        <div>
+          <label>Largo (m)</label>
+          <input type="number" id="espacioLargo" value="1" min="0.1" step="0.1">
+        </div>
+        <div>
+          <label>Ancho (m)</label>
+          <input type="number" id="espacioAncho" value="1" min="0.1" step="0.1">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bloque-outdoor" class="hidden">
+    <label>¿Dónde?</label>
+    <div class="radio-group">
+      <div class="radio-opt active" id="opt-suelo" onclick="setOutdoorTipo('suelo')">Suelo</div>
+      <div class="radio-opt" id="opt-maceta-out" onclick="setOutdoorTipo('maceta')">Maceta</div>
+    </div>
+
+    <div id="bloque-suelo">
+      <label>Cantidad máxima de plantas</label>
+      <input type="number" id="cantidadPlantasSuelo" value="2" min="1">
+      <label>Altura final deseada de la planta</label>
+      <select id="alturaFinal">
+        <option value="baja">Baja (~0,5–1 m)</option>
+        <option value="media" selected>Media (~1–1,8 m)</option>
+        <option value="alta">Alta (~1,8–3 m)</option>
+      </select>
+    </div>
+
+    <div id="bloque-maceta-out" class="hidden">
+      <label>Cantidad máxima de plantas disponibles</label>
+      <input type="number" id="cantidadMaxPlantas" value="3" min="1">
+    </div>
+
+    <label>Provincia</label>
+    <select id="provincia"></select>
+
+    <p class="hint" style="margin-top:10px;">Outdoor se calcula a 1 ciclo por año (es estacional, marca la naturaleza).</p>
+  </div>
+
+  <label>Nivel de cultivador</label>
+  <select id="experiencia">
+    <option value="0.6">Novicio</option>
+    <option value="0.8" selected>Medio</option>
+    <option value="1.0">Experto</option>
+  </select>
+
+  <label>Margen de respaldo ante pérdidas (plagas, errores de secado, plantas macho)</label>
+  <select id="margen">
+    <option value="0">Sin margen extra</option>
+    <option value="0.15" selected>Respaldo moderado (+15%)</option>
+    <option value="0.30">Alto respaldo (+30%)</option>
+  </select>
+
+  <button class="calc" onclick="calcular()">Calcular</button>
+</div>
+
+<div id="resultado"></div>
+
+<p class="disclaimer">
+  Esta herramienta realiza cálculos orientativos basados en los datos ingresados por el usuario y en un modelo de estimación. Sus resultados tienen fines exclusivamente informativos y de planificación, y no constituyen una recomendación médica, agronómica ni legal. No reemplaza el criterio profesional ni el control analítico. El cultivo y el uso de cannabis deben realizarse conforme a la normativa vigente.
+</p>
+
+</div><!-- fin app-content -->
+
+<script>
+function aceptarAviso() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+  document.getElementById("app-content").classList.remove("bloqueado");
+}
+function cerrarApp() {
+  document.body.innerHTML = '<div style="max-width:500px;margin:80px auto;text-align:center;font-family:-apple-system,sans-serif;color:#3a3d34;"><h2>Acceso cancelado</h2><p style="font-size:14px;color:#5a5f52;">Para usar la herramienta es necesario aceptar el aviso.</p></div>';
+}
+// ---------- Datos de modelo ----------
+
+const curveAB = [[5,16],[7,24],[10,32],[15,44],[20,56],[30,72],[40,88],[60,120]];
+const curveD  = [[10,3],[20,6],[40,8]];
+const curveC  = { baja: 99, media: 176, alta: 440 };
+const eficienciaMetodo = { aceite: 0.70, alcohol: 0.80, otro: 0.70 };
+const factorDescarb = 0.98;
+
+const provincias = [
+  ["Jujuy", -24.2, "NOA/NEA"], ["Salta", -24.8, "NOA/NEA"], ["Tucumán", -26.8, "NOA/NEA"],
+  ["Formosa", -26.2, "NOA/NEA"], ["Santiago del Estero", -27.8, "NOA/NEA"], ["Catamarca", -28.5, "NOA/NEA"],
+  ["Chaco", -27.5, "NOA/NEA"], ["Corrientes", -27.5, "NOA/NEA"], ["Misiones", -27.4, "NOA/NEA"],
+  ["La Rioja", -29.4, "NOA/NEA"],
+  ["Córdoba", -31.4, "Centro"], ["Santa Fe", -31.6, "Centro"], ["Entre Ríos", -31.7, "Centro"],
+  ["CABA", -34.6, "Centro"], ["Buenos Aires", -34.9, "Centro"], ["La Pampa", -36.6, "Centro"],
+  ["Mendoza", -32.9, "Cuyo"], ["San Juan", -31.5, "Cuyo"], ["San Luis", -33.3, "Cuyo"],
+  ["Neuquén", -38.9, "Patagonia"], ["Río Negro", -40.8, "Patagonia"], ["Chubut", -43.3, "Patagonia"],
+  ["Santa Cruz", -51.6, "Patagonia"], ["Tierra del Fuego", -54.8, "Patagonia"]
+];
+
+const heladaDayByRegion = { "NOA/NEA": 278, "Centro": 278, "Cuyo": 293, "Patagonia": 319 };
+const UMBRAL_FOTOPERIODO = 13.1;
+
+// ---------- Helpers ----------
+
+function interpolate(points, x) {
+  if (x <= points[0][0]) return points[0][1];
+  if (x >= points[points.length - 1][0]) return points[points.length - 1][1];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = points[i], [x2, y2] = points[i + 1];
+    if (x >= x1 && x <= x2) {
+      return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
+    }
+  }
+  return points[points.length - 1][1];
+}
+
+function rendimientoPorLitro(l) { return interpolate(curveAB, l); }
+function semanasVegetativo(l) { return interpolate(curveD, l); }
+
+function daylightHours(latDeg, doy) {
+  const decl = 23.45 * Math.sin((360 / 365) * (284 + doy) * Math.PI / 180);
+  const latRad = latDeg * Math.PI / 180;
+  const declRad = decl * Math.PI / 180;
+  let cosH = -Math.tan(latRad) * Math.tan(declRad);
+  cosH = Math.max(-1, Math.min(1, cosH));
+  const H = Math.acos(cosH);
+  return (24 / Math.PI) * H;
+}
+
+function fechaDisparoFloracion(latDeg, umbral) {
+  for (let d = 355; d <= 355 + 120; d++) {
+    const doy = ((d - 1) % 365) + 1;
+    if (daylightHours(latDeg, doy) <= umbral) return d;
+  }
+  return null;
+}
+
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const CUM = [31,59,90,120,151,181,212,243,273,304,334,365];
+
+function doyToDate(extDay) {
+  const doy = ((extDay - 1) % 365) + 1;
+  let m = 0;
+  while (doy > CUM[m]) m++;
+  const dayInMonth = doy - (m === 0 ? 0 : CUM[m - 1]);
+  return Math.round(dayInMonth) + " de " + MESES[m];
+}
+
+const MACETA_ESTANDAR = [5, 7, 10, 15, 20, 30, 40, 60];
+
+function findMinLitrosParaObjetivo(objetivoGPorPlanta, indiceExp) {
+  for (const l of MACETA_ESTANDAR) {
+    if (rendimientoPorLitro(l) * indiceExp >= objetivoGPorPlanta) return l;
+  }
+  return 60; // tope de tamaño estándar realista; si no alcanza acá, el problema no es la maceta
+}
+
+// ---------- UI wiring ----------
+
+let doseMode = "mg";
+function setDoseMode(mode) {
+  doseMode = mode;
+  document.getElementById("opt-mg").classList.toggle("active", mode === "mg");
+  document.getElementById("opt-gotas").classList.toggle("active", mode === "gotas");
+  document.getElementById("bloque-mg").classList.toggle("hidden", mode !== "mg");
+  document.getElementById("bloque-gotas").classList.toggle("hidden", mode !== "gotas");
+}
+
+let modalidad = "indoor";
+function setModalidad(m) {
+  modalidad = m;
+  document.getElementById("opt-indoor").classList.toggle("active", m === "indoor");
+  document.getElementById("opt-outdoor").classList.toggle("active", m === "outdoor");
+  document.getElementById("bloque-indoor").classList.toggle("hidden", m !== "indoor");
+  document.getElementById("bloque-outdoor").classList.toggle("hidden", m !== "outdoor");
+}
+
+let outdoorTipo = "suelo";
+function setOutdoorTipo(t) {
+  outdoorTipo = t;
+  document.getElementById("opt-suelo").classList.toggle("active", t === "suelo");
+  document.getElementById("opt-maceta-out").classList.toggle("active", t === "maceta");
+  document.getElementById("bloque-suelo").classList.toggle("hidden", t !== "suelo");
+  document.getElementById("bloque-maceta-out").classList.toggle("hidden", t !== "maceta");
+}
+
+let potenciaMode = "porcentaje";
+function setPotenciaMode(mode) {
+  potenciaMode = mode;
+  document.getElementById("opt-porcentaje").classList.toggle("active", mode === "porcentaje");
+  document.getElementById("opt-mgg").classList.toggle("active", mode === "mgg");
+  document.getElementById("bloque-porcentaje").classList.toggle("hidden", mode !== "porcentaje");
+  document.getElementById("bloque-mgg").classList.toggle("hidden", mode !== "mgg");
+}
+
+function actualizarLabelsCannabinoide() {
+  const c = document.getElementById("cannabinoide").value;
+  document.getElementById("label-dosis").textContent = `¿Qué dosis diaria de ${c} tenés indicada?`;
+  document.getElementById("label-potencia-toggle").textContent = `¿Cómo tenés el dato de contenido de ${c} de tu flor?`;
+  document.getElementById("label-potencia").textContent = `Contenido de ${c} de tu flor`;
+  document.getElementById("label-mgg").textContent = `mg de ${c} por gramo de flor (dato de cromatografía)`;
+}
+
+function togglePotenciaCustom() {
+  const v = document.getElementById("potencia").value;
+  document.getElementById("bloque-potencia-custom").classList.toggle("hidden", v !== "personalizado");
+}
+
+function togglEspacioCustom() {
+  const v = document.getElementById("espacioIndoor").value;
+  document.getElementById("bloque-espacio-custom").classList.toggle("hidden", v !== "personalizada");
+}
+document.getElementById("espacioIndoor").addEventListener("change", togglEspacioCustom);
+
+// poblar provincias (alfabético, sin agrupar; la región queda en dataset para el cálculo)
+(function initProvincias() {
+  const sel = document.getElementById("provincia");
+  const ordenadas = [...provincias].sort((a, b) => a[0].localeCompare(b[0], "es"));
+  ordenadas.forEach(([nombre, lat, region]) => {
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    opt.dataset.lat = lat;
+    opt.dataset.region = region;
+    opt.textContent = nombre;
+    sel.appendChild(opt);
+  });
+})();
+
+// ---------- Motor de recomendaciones (indoor y outdoor-suelo) ----------
+// Cada modalidad declara qué variables puede tocar y en qué orden.
+// El motor prueba una por una, en orden, y devuelve la primera modificación
+// mínima que saca el resultado del rojo. Outdoor-Maceta no usa este motor
+// porque ya tiene su propio árbol de restricciones (tiempo/rendimiento).
+
+function evaluarSemaforoRatio(produccion, necesidad) {
+  const ratio = produccion / necesidad;
+  if (ratio >= 1.20) return "verde";
+  if (ratio >= 0.90) return "amarillo";
+  return "rojo";
+}
+
+function recomendarOutdoorSuelo(alturaActual, cantidadActual, indiceExp, margen, necesidad) {
+  // Variable 1: plantas
+  for (let p = cantidadActual + 1; p <= cantidadActual + 20; p++) {
+    const prod = curveC[alturaActual] * indiceExp * p * (1 - margen);
+    if (evaluarSemaforoRatio(prod, necesidad) !== "rojo") {
+      return `Con ${p} plantas en vez de ${cantidadActual} cubrirías el tratamiento.`;
+    }
+  }
+
+  // Variable 2: altura final (desarrollo esperado)
+  const niveles = ["baja", "media", "alta"];
+  const labels = { baja: "baja", media: "media", alta: "alta" };
+  const idx = niveles.indexOf(alturaActual);
+  for (let i = idx + 1; i < niveles.length; i++) {
+    const prod = curveC[niveles[i]] * indiceExp * cantidadActual * (1 - margen);
+    if (evaluarSemaforoRatio(prod, necesidad) !== "rojo") {
+      return `Buscando un desarrollo ${labels[niveles[i]]} en vez de ${labels[alturaActual]} cubrirías el tratamiento.`;
+    }
+  }
+
+  return "No existe una configuración simple (cambiando una sola variable) que cubra el tratamiento con tus restricciones actuales. Puede hacer falta combinar varios ajustes, o revisar la dosis y la potencia de la flor con tu RT.";
+}
+
+// ---------- Cálculo principal ----------
+
+function calcular() {
+  let confianzaAprox = false;
+
+  // Bloque 1 — necesidad
+  let mgDia;
+  if (doseMode === "mg") {
+    mgDia = parseFloat(document.getElementById("mgDia").value) || 0;
+  } else {
+    const gotasDia = parseFloat(document.getElementById("gotasDia").value) || 0;
+    const concentracion = parseFloat(document.getElementById("concentracionMgMl").value) || 0;
+    const gotasPorMl = 20; // estándar fijo de modelo
+    const mlDia = gotasDia / gotasPorMl;
+    mgDia = mlDia * concentracion;
+  }
+  let diasPorSemana = parseFloat(document.getElementById("diasPorSemana").value) || 7;
+  diasPorSemana = Math.min(7, Math.max(1, diasPorSemana));
+  const diasTratamiento = diasPorSemana * (365 / 7);
+  const mgAnio = mgDia * diasTratamiento;
+
+  const elaboracion = document.getElementById("elaboracion").value;
+  const eficienciaTotal = eficienciaMetodo[elaboracion] * factorDescarb;
+
+  let potencia;
+  if (potenciaMode === "mgg") {
+    const mgG = parseFloat(document.getElementById("potenciaMgG").value) || 100;
+    potencia = mgG / 10;
+  } else {
+    const potenciaSel = document.getElementById("potencia").value;
+    if (potenciaSel === "personalizado") {
+      potencia = parseFloat(document.getElementById("potenciaCustom").value) || 10;
+      confianzaAprox = true;
+    } else {
+      potencia = parseFloat(potenciaSel);
+    }
+  }
+
+  const gramosSecosNecesariosAnio = mgAnio / (potencia * 10 * eficienciaTotal);
+  const ciclosPorAno = modalidad === "outdoor" ? 1 : (parseFloat(document.getElementById("ciclosPorAno").value) || 1);
+  const gramosNecesariosPorCiclo = gramosSecosNecesariosAnio / ciclosPorAno;
+
+  const indiceExperiencia = parseFloat(document.getElementById("experiencia").value);
+  const margen = parseFloat(document.getElementById("margen").value);
+
+  let capacidadAnual = 0, cantidadPlantas = 0, macetaUsada = null, superficieM2 = 0;
+  let fechaSiembra = null, avisoInsuficiente = null, alturaLabel = null;
+
+  if (modalidad === "indoor") {
+    const espacioSel = document.getElementById("espacioIndoor").value;
+    const espacioM2 = espacioSel === "personalizada"
+      ? (parseFloat(document.getElementById("espacioLargo").value) || 1) * (parseFloat(document.getElementById("espacioAncho").value) || 1)
+      : parseFloat(espacioSel);
+    const cantidadMaxIndoor = parseFloat(document.getElementById("cantidadMaxPlantasIndoor").value) || 1;
+
+    // Indoor — árbol de decisión por restricciones (mismo patrón que outdoor-maceta, con ESPACIO en vez de TIEMPO)
+    const objetivoConMargenIndoor = gramosNecesariosPorCiclo / (1 - margen);
+    const objetivoPorPlantaIndoor = objetivoConMargenIndoor / cantidadMaxIndoor;
+    const macetaIdealIndoor = findMinLitrosParaObjetivo(objetivoPorPlantaIndoor, indiceExperiencia);
+    const rendimientoIdealIndoor = rendimientoPorLitro(macetaIdealIndoor) * indiceExperiencia;
+
+    if (rendimientoIdealIndoor < objetivoPorPlantaIndoor * 0.999) {
+      // restricción: RENDIMIENTO/PLANTAS — ni la maceta más grande razonable alcanza
+      macetaUsada = macetaIdealIndoor;
+      cantidadPlantas = cantidadMaxIndoor;
+      superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+      capacidadAnual = rendimientoIdealIndoor * cantidadMaxIndoor * (1 - margen) * ciclosPorAno;
+      const plantasNecesarias = Math.ceil(objetivoConMargenIndoor / rendimientoIdealIndoor);
+      avisoInsuficiente = `Con ${cantidadMaxIndoor} plantas, ni la maceta más grande razonable (${Math.round(macetaIdealIndoor)} L) alcanza a cubrir el tratamiento. Subiendo a ${plantasNecesarias} plantas se cubre con esa misma maceta.`;
+
+    } else {
+      const cantidadQueEntraConIdeal = Math.max(1, Math.floor((espacioM2 * 100) / macetaIdealIndoor));
+
+      if (cantidadQueEntraConIdeal >= cantidadMaxIndoor) {
+        // RAMA A — el espacio alcanza para la maceta ideal
+        macetaUsada = macetaIdealIndoor;
+        cantidadPlantas = cantidadMaxIndoor;
+        superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+        capacidadAnual = rendimientoIdealIndoor * cantidadMaxIndoor * (1 - margen) * ciclosPorAno;
+
+      } else {
+        // restricción activa: ESPACIO — la maceta ideal no entra, buscar la más grande que sí entra
+        const macetaMaxPorEspacio = (espacioM2 * 100) / cantidadMaxIndoor;
+        const produccionEspacio = rendimientoPorLitro(macetaMaxPorEspacio) * indiceExperiencia * cantidadMaxIndoor * (1 - margen) * ciclosPorAno;
+
+        macetaUsada = macetaMaxPorEspacio;
+        cantidadPlantas = cantidadMaxIndoor;
+        superficieM2 = espacioM2;
+        capacidadAnual = produccionEspacio;
+
+        if (capacidadAnual / gramosSecosNecesariosAnio < 0.90) {
+          // ni con la maceta máxima que entra en el espacio alcanza — probar sumar ciclos antes de rendirse
+          let resuelto = false;
+          for (let c = ciclosPorAno + 1; c <= 5; c++) {
+            const prodC = rendimientoPorLitro(macetaMaxPorEspacio) * indiceExperiencia * cantidadMaxIndoor * (1 - margen) * c;
+            if (prodC / gramosSecosNecesariosAnio >= 0.90) {
+              avisoInsuficiente = `Con tu espacio actual no alcanza a 1 ciclo, pero sumando ${c} ciclos por año sí cubrirías el tratamiento con esta misma cantidad de plantas.`;
+              resuelto = true;
+              break;
+            }
+          }
+          if (!resuelto) {
+            const espacioNecesario = (macetaIdealIndoor * cantidadMaxIndoor) / 100;
+            avisoInsuficiente = `Con tu espacio actual (${Math.round(espacioM2 * 100) / 100} m²) no alcanza, ni sumando ciclos. Para cubrir el tratamiento con ${cantidadMaxIndoor} plantas necesitarías aproximadamente ${Math.round(espacioNecesario * 100) / 100} m² (macetas de ${Math.round(macetaIdealIndoor)} L). Otra opción es reducir la cantidad de plantas y usar macetas más grandes, o revisar dosis/potencia con tu RT.`;
+          }
+        }
+      }
+    }
+
+  } else {
+    // outdoor
+    const provSel = document.getElementById("provincia");
+    const provOpt = provSel.options[provSel.selectedIndex];
+    const lat = parseFloat(provOpt.dataset.lat);
+    const region = provOpt.dataset.region;
+
+    const disparoDay = fechaDisparoFloracion(lat, UMBRAL_FOTOPERIODO);
+
+    if (outdoorTipo === "suelo") {
+      const altura = document.getElementById("alturaFinal").value;
+      alturaLabel = altura;
+      cantidadPlantas = parseFloat(document.getElementById("cantidadPlantasSuelo").value) || 1;
+      const rendBase = curveC[altura];
+      superficieM2 = null;
+
+      const rendEsperado = rendBase * indiceExperiencia;
+      const produccionPotencial = rendEsperado * cantidadPlantas;
+      const produccionDisponible = produccionPotencial * (1 - margen);
+      capacidadAnual = produccionDisponible * ciclosPorAno;
+
+      if (capacidadAnual / gramosSecosNecesariosAnio < 0.90) {
+        avisoInsuficiente = recomendarOutdoorSuelo(altura, cantidadPlantas, indiceExperiencia, margen, gramosSecosNecesariosAnio);
+      }
+
+    } else {
+      // outdoor-maceta — árbol de decisión por restricciones
+      const cantidadMax = parseFloat(document.getElementById("cantidadMaxPlantas").value) || 1;
+      const objetivoConMargen = gramosNecesariosPorCiclo / (1 - margen);
+      const objetivoPorPlanta = objetivoConMargen / cantidadMax;
+      const heladaDay = heladaDayByRegion[region];
+      const ventanaReal = disparoDay - heladaDay;
+
+      // Paso 1-2: maceta ideal (la que cubriría todo, con margen ya incluido en el objetivo)
+      const macetaIdeal = findMinLitrosParaObjetivo(objetivoPorPlanta, indiceExperiencia);
+      const rendimientoIdealPosible = rendimientoPorLitro(macetaIdeal) * indiceExperiencia;
+
+      if (rendimientoIdealPosible < objetivoPorPlanta * 0.999) {
+        // restricción activa: RENDIMIENTO — ni la maceta más grande realista alcanza el objetivo por planta.
+        // El límite acá no es el tiempo, es que no hay más plantas para repartir la necesidad.
+        macetaUsada = macetaIdeal;
+        cantidadPlantas = cantidadMax;
+        superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+        capacidadAnual = rendimientoIdealPosible * cantidadMax * (1 - margen) * ciclosPorAno;
+
+        const plantasNecesarias = Math.ceil(objetivoConMargen / rendimientoIdealPosible);
+        avisoInsuficiente = `Con ${cantidadMax} plantas, ni la maceta más grande razonable (${Math.round(macetaIdeal)} L) alcanza a cubrir el tratamiento — acá el límite no es el tiempo, es la cantidad de plantas. Subiendo a ${plantasNecesarias} plantas se cubre con esa misma maceta.`;
+
+      } else {
+      const semanasIdeal = semanasVegetativo(macetaIdeal);
+
+      if (semanasIdeal * 7 <= ventanaReal) {
+        // RAMA A — el tiempo alcanza para la maceta ideal
+        macetaUsada = macetaIdeal;
+        cantidadPlantas = cantidadMax;
+        superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+        const siembraDay = disparoDay - Math.round(semanasIdeal * 7);
+        fechaSiembra = doyToDate(siembraDay);
+
+        const produccionPotencial = rendimientoPorLitro(macetaIdeal) * indiceExperiencia * cantidadPlantas;
+        capacidadAnual = produccionPotencial * (1 - margen) * ciclosPorAno;
+
+      } else {
+        // restricción activa: TIEMPO — buscar la mayor maceta que sí entra en la ventana real
+        let macetaB = 3;
+        for (let l = 3; l <= 100; l += 0.5) {
+          if (semanasVegetativo(l) * 7 <= ventanaReal) macetaB = l; else break;
+        }
+        const produccionB = rendimientoPorLitro(macetaB) * indiceExperiencia * cantidadMax * (1 - margen);
+
+        if (produccionB >= gramosNecesariosPorCiclo) {
+          // RAMA B — maceta más chica, pero con el tiempo disponible alcanza igual
+          macetaUsada = macetaB;
+          cantidadPlantas = cantidadMax;
+          superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+          const semanasB = semanasVegetativo(macetaB);
+          const siembraDay = disparoDay - Math.round(semanasB * 7);
+          fechaSiembra = doyToDate(siembraDay);
+          avisoInsuficiente = null;
+          capacidadAnual = produccionB * ciclosPorAno;
+
+        } else {
+          // restricción activa: RENDIMIENTO/PLANTAS — no alcanza ni con la maceta máxima que entra en el tiempo
+          macetaUsada = macetaB;
+          cantidadPlantas = cantidadMax;
+          superficieM2 = (macetaUsada * cantidadPlantas) / 100;
+          capacidadAnual = produccionB * ciclosPorAno;
+
+          const plantasNecesarias = Math.ceil(objetivoConMargen / (rendimientoPorLitro(macetaB) * indiceExperiencia));
+
+          avisoInsuficiente = `Con ${cantidadMax} plantas y el tiempo disponible en tu región, no cubrís el tratamiento (maceta máxima posible: ${macetaB} L). Dos caminos para resolverlo: `
+            + `(1) subir a ${plantasNecesarias} plantas manteniendo esta maceta, o `
+            + `(2) si no podés sumar plantas, sembrar antes en interior (aprox. agosto) y trasplantar afuera recién cuando termine el riesgo de helada en tu región — así ganás el tiempo que falta y podés usar la maceta ideal de ${Math.round(macetaIdeal * 10) / 10} L con tus ${cantidadMax} plantas actuales.`;
+        }
+      }
+      }
+    }
+  }
+
+  // Comparación y semáforo
+  const ratio = capacidadAnual / gramosSecosNecesariosAnio;
+  let semaforo, semClass;
+  if (ratio >= 1.20) { semaforo = "Sí, tu cultivo alcanza"; semClass = "sem-verde"; }
+  else if (ratio >= 0.90) { semaforo = "Justo — poco margen"; semClass = "sem-amarillo"; }
+  else { semaforo = "No alcanza con esta configuración"; semClass = "sem-rojo"; }
+
+  const anchoRango = confianzaAprox ? 0.25 : 0.10;
+  const rangoMin = capacidadAnual * (1 - anchoRango);
+  const rangoMax = capacidadAnual * (1 + anchoRango);
+  const confianzaLabel = confianzaAprox ? "Estimación aproximada" : "Alta confianza";
+
+  // Frascos estimados
+  const mgDisponibles = capacidadAnual * potencia * 10 * eficienciaTotal;
+  const concentracionEjemplo = doseMode === "gotas"
+    ? (parseFloat(document.getElementById("concentracionMgMl").value) || 30)
+    : 30;
+  const mgPorFrasco = concentracionEjemplo * 30;
+  const frascos = Math.max(0, Math.floor(mgDisponibles / mgPorFrasco));
+
+  renderResultado({
+    semaforo, semClass, confianzaLabel,
+    capacidadAnual, rangoMin, rangoMax,
+    gramosSecosNecesariosAnio,
+    modalidad, outdoorTipo, cantidadPlantas, macetaUsada, superficieM2, alturaLabel,
+    ciclosPorAno, fechaSiembra, avisoInsuficiente,
+    frascos, concentracionEjemplo
+  });
+}
+
+function renderResultado(r) {
+  const el = document.getElementById("resultado");
+  let configItems = [];
+  configItems.push(r.modalidad === "indoor" ? "Indoor" : `Outdoor (${r.outdoorTipo})`);
+  configItems.push(`${Math.round(r.cantidadPlantas)} planta${r.cantidadPlantas === 1 ? "" : "s"}`);
+  if (r.alturaLabel) {
+    const labels = { baja: "Altura baja", media: "Altura media", alta: "Altura alta" };
+    configItems.push(labels[r.alturaLabel]);
+  }
+  if (r.macetaUsada) configItems.push(`Maceta de ${Math.round(r.macetaUsada * 10) / 10} L`);
+  configItems.push(`${r.ciclosPorAno} ciclo${r.ciclosPorAno === 1 ? "" : "s"} por año`);
+  if (r.fechaSiembra) configItems.push(`Fecha de siembra estimada: ${r.fechaSiembra}`);
+
+  let html = `
+    <div class="card">
+      <div class="semaforo ${r.semClass}">
+        <span>${r.semaforo}</span>
+        <span class="confianza">${r.confianzaLabel}</span>
+      </div>
+      ${r.avisoInsuficiente ? `<div class="aviso">${r.avisoInsuficiente}</div>` : ""}
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Producción esperada</div>
+          <div class="value">${Math.round(r.rangoMin)}–${Math.round(r.rangoMax)} g/año</div>
+        </div>
+        <div class="metric">
+          <div class="label">Tu tratamiento requiere</div>
+          <div class="value">${Math.round(r.gramosSecosNecesariosAnio)} g/año</div>
+        </div>
+      </div>
+      <ul class="config-list">
+        ${configItems.map(i => `<li>${i}</li>`).join("")}
+      </ul>
+      <p style="font-size:14px; margin-bottom:6px;">Con esta producción podrías elaborar aproximadamente <strong>${r.frascos} frascos de 30 ml a ${r.concentracionEjemplo} mg/ml</strong>.</p>
+      <a class="btn-formulador" href="https://formulador.matiasbucat.com.ar/?florDisponibleG=${Math.round(r.capacidadAnual)}" target="_blank" rel="noopener">Calcular formulación →</a>
+    </div>
+  `;
+  el.innerHTML = html;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+</script>
+</body>
+</html>
